@@ -303,19 +303,46 @@ export function DashboardApp() {
     const key = `noti-lms-notified-${format(new Date(), "yyyy-MM-dd")}`;
     if (window.sessionStorage.getItem(key)) return;
 
-    const messageParts = [
-      todayTasks.length ? `${todayTasks.length} due today` : "",
-      dueTomorrow.length ? `${dueTomorrow.length} due tomorrow` : "",
-      examsSoon.length ? `${examsSoon.length} exam${examsSoon.length === 1 ? "" : "s"} soon` : "",
-    ].filter(Boolean);
+    const totalTasks = todayTasks.length + dueTomorrow.length + examsSoon.length;
+    if (totalTasks === 0) return;
 
-    if (messageParts.length) {
-      // Use Service Worker showNotification — works on both mobile and desktop
-      showLocalNotification("Noti LMS", messageParts.join(" · "), {
-        tag: "daily-summary",
+    let title = "Noti LMS Update";
+    let body = "";
+
+    if (totalTasks === 1) {
+      const task = todayTasks[0] || dueTomorrow[0] || examsSoon[0];
+      const timeStr = format(getTaskDate(task), "h:mm a");
+      const dayStr = isToday(getTaskDate(task)) ? "today" : "tomorrow";
+      title = `🔔 Task Due: ${task.title}`;
+      body = `Course: ${task.courseName}\nDue: ${timeStr} ${dayStr}`;
+    } else {
+      title = `🔔 ${totalTasks} Upcoming Tasks`;
+      
+      const allUpcoming = [
+        ...todayTasks.map(t => ({ task: t, label: "Today" })),
+        ...dueTomorrow.map(t => ({ task: t, label: "Tomorrow" })),
+        ...examsSoon.map(t => ({ task: t, label: "Exam" })),
+      ];
+
+      // Limit to first 3 tasks to fit mobile notification previews
+      const displayTasks = allUpcoming.slice(0, 3);
+      const lines = displayTasks.map(({ task, label }) => {
+        const timeStr = format(getTaskDate(task), "h:mm a");
+        // Truncate course name if it is very long
+        const course = task.courseName.length > 15 ? task.courseName.slice(0, 13) + ".." : task.courseName;
+        return `• [${label}] ${task.title} (${course} - ${timeStr})`;
       });
-      window.sessionStorage.setItem(key, "true");
+
+      if (allUpcoming.length > 3) {
+        lines.push(`... and ${allUpcoming.length - 3} more tasks`);
+      }
+      body = lines.join("\n");
     }
+
+    showLocalNotification(title, body, {
+      tag: "daily-summary",
+    });
+    window.sessionStorage.setItem(key, "true");
   }, [dueTomorrow.length, examsSoon.length, notificationPermission, todayTasks.length]);
 
   const handleLogin = (nextSession: MoodleSession) => {
@@ -892,6 +919,27 @@ function SettingsView({
               )}
             </div>
           </div>
+
+          {notificationPermission === "granted" && (
+            <div className="rounded bg-white p-3 text-sm dark:bg-[#171A20]">
+              <div className="flex items-center justify-between gap-4">
+                <span>Test notification</span>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() =>
+                    showLocalNotification(
+                      "🔔 Noti LMS: 3 Upcoming Tasks",
+                      "• [Today] Homework 3 (Math 101 - 11:59 PM)\n• [Tomorrow] Lab Report (CS 202 - 2:00 PM)\n• [Exam] Final Quiz (Physics - 9:00 AM)",
+                      { tag: "test-notification" }
+                    )
+                  }
+                >
+                  Send Test
+                </Button>
+              </div>
+            </div>
+          )}
 
           <div className="rounded bg-white p-3 text-sm dark:bg-[#171A20]">
             <div className="flex items-center justify-between gap-4">
