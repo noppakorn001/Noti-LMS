@@ -48,6 +48,14 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  isPushSupported,
+  isInstalledPWA,
+  registerServiceWorker,
+  subscribeToPush,
+  showLocalNotification,
+} from "@/lib/push-client";
+import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 
 const SESSION_KEY = "noti-lms-session";
 const THEME_KEY = "noti-lms-theme";
@@ -235,6 +243,9 @@ export function DashboardApp() {
     setSession(readStoredSession());
     setNotificationPermission(typeof Notification === "undefined" ? "denied" : Notification.permission);
     setHasHydrated(true);
+
+    // Register Service Worker for PWA & push notification support
+    registerServiceWorker();
   }, []);
 
   const coursesQuery = useQuery({
@@ -299,8 +310,9 @@ export function DashboardApp() {
     ].filter(Boolean);
 
     if (messageParts.length) {
-      new Notification("Noti LMS", {
-        body: messageParts.join(" · "),
+      // Use Service Worker showNotification — works on both mobile and desktop
+      showLocalNotification("Noti LMS", messageParts.join(" · "), {
+        tag: "daily-summary",
       });
       window.sessionStorage.setItem(key, "true");
     }
@@ -322,6 +334,12 @@ export function DashboardApp() {
     if (typeof Notification === "undefined") return;
     const permission = await Notification.requestPermission();
     setNotificationPermission(permission);
+
+    // If granted, subscribe to push notifications for background alerts
+    if (permission === "granted" && isPushSupported()) {
+      const registration = await navigator.serviceWorker.ready;
+      await subscribeToPush(registration);
+    }
   };
 
   if (!hasHydrated) {
@@ -387,6 +405,9 @@ export function DashboardApp() {
           </div>
         </section>
       </div>
+
+      {/* PWA install prompt for iOS & Android */}
+      <PWAInstallPrompt />
     </main>
   );
 }
@@ -818,6 +839,12 @@ function SettingsView({
   enableNotifications: () => void;
   onLogout: () => void;
 }) {
+  const [pwaInstalled, setPwaInstalled] = useState(false);
+
+  useEffect(() => {
+    setPwaInstalled(isInstalledPWA());
+  }, []);
+
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       <Card className="space-y-5">
@@ -850,17 +877,38 @@ function SettingsView({
             Dark
           </Button>
         </div>
-        <div className="rounded bg-white p-3 text-sm dark:bg-[#171A20]">
-          <div className="flex items-center justify-between gap-4">
-            <span>Browser notifications</span>
-            {notificationPermission === "granted" ? (
-              <Badge className="bg-[#F4F4F4] dark:bg-white/10">Enabled</Badge>
-            ) : (
-              <Button variant="secondary" size="sm" onClick={enableNotifications}>
-                Enable
-              </Button>
-            )}
+
+        {/* Notification settings */}
+        <div className="space-y-2">
+          <div className="rounded bg-white p-3 text-sm dark:bg-[#171A20]">
+            <div className="flex items-center justify-between gap-4">
+              <span>Push notifications</span>
+              {notificationPermission === "granted" ? (
+                <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">Enabled</Badge>
+              ) : (
+                <Button variant="secondary" size="sm" onClick={enableNotifications}>
+                  Enable
+                </Button>
+              )}
+            </div>
           </div>
+
+          <div className="rounded bg-white p-3 text-sm dark:bg-[#171A20]">
+            <div className="flex items-center justify-between gap-4">
+              <span>App installed (PWA)</span>
+              {pwaInstalled ? (
+                <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">Installed</Badge>
+              ) : (
+                <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">Not installed</Badge>
+              )}
+            </div>
+          </div>
+
+          {!pwaInstalled && (
+            <p className="rounded bg-blue-50 px-3 py-2 text-xs leading-relaxed text-blue-700 dark:bg-blue-500/10 dark:text-blue-300">
+              <strong>iPhone users:</strong> Open in Safari → tap Share → Add to Home Screen. Push notifications only work inside the installed app (iOS 16.4+).
+            </p>
+          )}
         </div>
       </Card>
     </div>

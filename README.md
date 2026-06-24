@@ -32,6 +32,7 @@ Instead of navigating through multiple Moodle pages to find upcoming due dates, 
 | 📋 **Unified Task View** | Aggregates all assignments and quizzes across every enrolled course into a single dashboard |
 | 🔗 **Deep Linking** | Every task card is clickable and opens the corresponding Moodle activity in a new tab |
 | 🟢 **Visual Status Indicators** | Color-coded badges instantly communicate deadline urgency (Overdue, Due Soon, Upcoming, Completed) |
+| 🔔 **Push Notifications** | PWA with Service Worker push support — works on iPhone (iOS 16.4+), Android, and desktop |
 | 📱 **Mobile Responsive** | Fully optimized layout for all screen sizes — desktop, tablet, and mobile |
 | ⚡ **Edge Performance** | Deployed on Cloudflare Workers for global, low-latency performance |
 
@@ -86,9 +87,13 @@ npm run dev
 
 > Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-### Or use the included batch script (Windows)
+### Or use the included scripts
 
-```
+```bash
+# Linux / macOS
+./run.sh
+
+# Windows
 Double-click run.bat
 ```
 
@@ -123,9 +128,13 @@ npm run deploy
 
 > On first run, Wrangler will open a browser window to authenticate your Cloudflare account.
 
-### Or use the included batch script (Windows)
+### Or use the included scripts
 
-```
+```bash
+# Linux / macOS
+./deploy.sh
+
+# Windows
 Double-click deploy.bat
 ```
 

@@ -1,10 +1,20 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { QueryProvider } from "@/components/query-provider";
 
 export const metadata: Metadata = {
   title: "Noti LMS",
   description: "Tesla-style academic command center for Moodle assignments and exams.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Noti LMS",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#3E6AE1",
 };
 
 export default function RootLayout({
@@ -14,7 +24,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body>
+      <head>
+        <link rel="apple-touch-icon" href="/icon-192.png" />
+      </head>
+      <body suppressHydrationWarning>
         <QueryProvider>{children}</QueryProvider>
       </body>
     </html>
