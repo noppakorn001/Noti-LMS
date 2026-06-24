@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   title: "Noti LMS",
   description: "Tesla-style academic command center for Moodle assignments and exams.",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/icon-192.png",
+    shortcut: "/icon-192.png",
+    apple: "/icon-192.png",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",

@@ -478,7 +478,10 @@ function LoginScreen({
   return (
     <main className="min-h-screen bg-white text-[#171A20] dark:bg-[#171A20] dark:text-white">
       <header className="fixed left-0 right-0 top-0 z-10 flex h-16 items-center justify-between px-5 md:px-8">
-        <div className="text-sm font-medium tracking-[0.35em]">NOTI LMS</div>
+        <div className="flex items-center gap-2">
+          <img src="/logo.png" alt="Noti LMS" className="h-6 w-auto" />
+          <div className="text-sm font-medium tracking-[0.35em]">NOTI LMS</div>
+        </div>
         <Button
           variant="ghost"
           size="icon"
@@ -593,7 +596,10 @@ function Sidebar({
     <aside className="hidden w-[264px] shrink-0 flex-col justify-between bg-[#F4F4F4] px-4 py-5 dark:bg-[#111318] md:flex">
       <div>
         <div className="mb-10 flex items-center justify-between px-2">
-          <div className="text-sm font-medium tracking-[0.35em]">NOTI LMS</div>
+          <div className="flex items-center gap-2">
+            <img src="/logo.png" alt="Noti LMS" className="h-6 w-auto" />
+            <div className="text-sm font-medium tracking-[0.35em]">NOTI LMS</div>
+          </div>
           <Button variant="ghost" size="icon" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
             {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </Button>
@@ -646,7 +652,10 @@ function MobileNav({
   return (
     <div className="sticky top-0 z-20 bg-white/80 px-4 py-3 backdrop-blur dark:bg-[#171A20]/80 md:hidden">
       <div className="mb-3 flex items-center justify-between">
-        <div className="text-sm font-medium tracking-[0.35em]">NOTI LMS</div>
+        <div className="flex items-center gap-2">
+          <img src="/logo.png" alt="Noti LMS" className="h-6 w-auto" />
+          <div className="text-sm font-medium tracking-[0.35em]">NOTI LMS</div>
+        </div>
         <div className="flex items-center gap-1">
           <span className="max-w-[120px] truncate text-sm text-[#5C5E62] dark:text-[#D0D1D2]">
             {session.user.fullName}
