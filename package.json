@@ -7,9 +7,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:cf": "opennextjs-cloudflare build",
+    "preview": "opennextjs-cloudflare preview",
+    "deploy": "opennextjs-cloudflare deploy"
   },
   "dependencies": {
+    "@opennextjs/cloudflare": "^1.19.11",
     "@tailwindcss/postcss": "^4.3.1",
     "@tanstack/react-query": "^5.101.1",
     "@types/node": "^26.0.0",
@@ -27,5 +31,8 @@
     "tailwind-merge": "^3.6.0",
     "tailwindcss": "^4.3.1",
     "typescript": "^6.0.3"
+  },
+  "devDependencies": {
+    "wrangler": "^4.104.0"
   }
 }
