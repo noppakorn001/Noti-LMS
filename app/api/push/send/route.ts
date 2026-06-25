@@ -9,10 +9,7 @@
 
 import { getSubscriptions, removeSubscription } from "@/lib/push-db";
 import { normalizeMoodleUrl } from "@/lib/moodle-url";
-
-const VAPID_PUBLIC_KEY =
-  "BKkCBTXev6dqy1iwUgCLyK0NX4sYKilrT-Ja_M-eF3g7-5FINxqn2nQ6ti8x18-aUg7H254k9h7eFdyTvzKfbnU";
-const VAPID_PRIVATE_KEY = "VTlg1O7zJ_ZDMI7rimFgEftZTAT55uFuMaA7m0KwVyc";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 // Decode HTML entities (duplicate from lib/utils to run inside Serverless Edge/Worker)
 function decodeHtmlEntities(str: string): string {
@@ -221,6 +218,24 @@ export async function POST(request: Request) {
 
     if (list.length === 0) {
       return Response.json({ message: "No subscriptions registered" });
+    }
+
+    // Dynamically retrieve VAPID keys from Cloudflare bindings or fallback process.env
+    const context = (await getCloudflareContext()) as any;
+    const VAPID_PUBLIC_KEY =
+      context?.env?.NEXT_PUBLIC_VAPID_PUBLIC_KEY ||
+      process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ||
+      "BKkCBTXev6dqy1iwUgCLyK0NX4sYKilrT-Ja_M-eF3g7-5FINxqn2nQ6ti8x18-aUg7H254k9h7eFdyTvzKfbnU";
+    const VAPID_PRIVATE_KEY =
+      context?.env?.VAPID_PRIVATE_KEY ||
+      process.env.VAPID_PRIVATE_KEY;
+
+    if (!VAPID_PRIVATE_KEY) {
+      console.error("[Push] VAPID_PRIVATE_KEY environment variable is not configured.");
+      return Response.json(
+        { error: "VAPID private key is not configured on the server." },
+        { status: 500 }
+      );
     }
 
     // Import web-push (Node.js compatibility mode)
