@@ -34,8 +34,7 @@ export async function POST(request: Request) {
 
     if (subscriptions.size === 0) {
       return Response.json(
-        { error: "No subscriptions registered" },
-        { status: 404 }
+        { message: "No subscriptions registered" }
       );
     }
 
