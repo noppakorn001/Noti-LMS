@@ -13,12 +13,14 @@ const memorySubscriptions = new Map<string, PushSubscriptionJSON>();
 
 async function getKV(): Promise<any> {
   try {
-    const context = getCloudflareContext() as any;
+    const context = (await getCloudflareContext()) as any;
     if (context && context.env && context.env.NOTI_LMS_KV) {
+      console.log("[Push DB] Using Cloudflare KV storage");
       return context.env.NOTI_LMS_KV;
     }
+    console.log("[Push DB] KV binding not found, using memory fallback");
   } catch (error) {
-    // Falls back to memory in local dev where getCloudflareContext() is not available
+    console.log("[Push DB] getCloudflareContext() not available, using memory fallback");
   }
   return null;
 }
