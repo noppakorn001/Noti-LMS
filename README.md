@@ -1,204 +1,194 @@
-<div align="center">
-
 # 📚 Noti-LMS
 
-### A modern, intelligent task-tracking dashboard for Moodle LMS
+### A Tesla-Inspired Academic Command Center & Web Push System for Moodle LMS
 
-[![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-notilms.noppakornwunnoy01.workers.dev-0078D4?style=for-the-badge)](https://notilms.noppakornwunnoy01.workers.dev/)
-[![Next.js](https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-6-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
+[![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-notilms.noppakornwunnoy01.workers.dev-3E6AE1?style=for-the-badge)](https://notilms.noppakornwunnoy01.workers.dev/)
+[![Next.js](https://img.shields.io/badge/Next.js-16.2.9-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-F38020?style=for-the-badge&logo=cloudflare)](https://workers.cloudflare.com/)
-[![TailwindCSS](https://img.shields.io/badge/Tailwind-CSS-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
+[![TailwindCSS](https://img.shields.io/badge/Tailwind-CSS_v4-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
 
-> **🔗 Live Website:** https://notilms.noppakornwunnoy01.workers.dev/
-
-</div>
+> **🔗 Live URL:** [https://notilms.noppakornwunnoy01.workers.dev/](https://notilms.noppakornwunnoy01.workers.dev/)
 
 ---
 
 ## 📖 Overview
 
-**Noti-LMS** is a full-stack web application designed to enhance the Moodle LMS experience by providing a clean, premium dashboard that aggregates assignments and quizzes across all enrolled courses into a single, unified view.
+**Noti-LMS** is a high-performance, edge-rendered PWA dashboard designed to streamline the student workflow. It integrates directly with the **Moodle REST API**, aggregating assignments, quizzes, and exams across all enrolled courses into a single, cohesive command center. 
 
-Instead of navigating through multiple Moodle pages to find upcoming due dates, students can log in once and instantly see all their pending tasks—sorted by urgency, color-coded by status, and directly linked to the corresponding Moodle activity page.
+By eliminating the fragmented, click-heavy layout of standard Moodle platforms, Noti-LMS offers a unified workspace where students can track deadlines, receive background push notifications, and access tasks directly.
+
+---
+
+## 🎨 Tesla Aesthetic & Design Philosophy
+
+The user interface of Noti-LMS is meticulously styled based on the **Tesla Design System** principles of radical layout subtraction and high contrast.
+
+- **Extreme Minimalism:** No decorative gradients, heavy box-shadows, or extraneous borders. Depth is created purely using white space, layout alignment, and flat gray tones (`#F4F4F4` light mode / `#111318` dark mode).
+- **Responsive Typography:** Features system-native fallbacks mirroring modern display faces (such as "Universal Sans Text" and "Universal Sans Display") for a clean, premium appearance.
+- **Micro-Animations:** Fluid, responsive user interactions powered by custom-tailored transition curves (`cubic-bezier(0.5, 0, 0, 0.75)` with a `330ms` timing window).
+- **Three-State Collapsible Sidebar (Desktop):** 
+  - **Expanded:** Standard wide view containing full descriptive labels, themes, and user settings.
+  - **Collapsed:** A compact `72px` sidebar displaying only navigation icons, maximizing screen space while keeping views accessible.
+  - **Hidden:** Completely hides the sidebar from the workspace, showing a clean `☰` toggle next to the page title.
+- **Mobile-First Optimizations:** Lock-in screen parameters (`user-scalable=no`, `maximum-scale=1`) coupled with flexbox box-model bounds preventing accidental horizontal overflow scrolling.
 
 ---
 
 ## ✨ Key Features
 
-| Feature | Description |
+| Feature | Technical Implementation |
 |---|---|
-| 🔐 **Secure Authentication** | Authenticates directly with your institution's Moodle server using the official Moodle Web Services API |
-| 📋 **Unified Task View** | Aggregates all assignments and quizzes across every enrolled course into a single dashboard |
-| 🔗 **Deep Linking** | Every task card is clickable and opens the corresponding Moodle activity in a new tab |
-| 🟢 **Visual Status Indicators** | Color-coded badges instantly communicate deadline urgency (Overdue, Due Soon, Upcoming, Completed) |
-| 🔔 **Push Notifications** | PWA with Service Worker push support — works on iPhone (iOS 16.4+), Android, and desktop |
-| 📱 **Mobile Responsive** | Fully optimized layout for all screen sizes — desktop, tablet, and mobile |
-| ⚡ **Edge Performance** | Deployed on Cloudflare Workers for global, low-latency performance |
+| 🔐 **Secure Authentication** | Direct Moodle Web Services API handshakes with short-lived session token exchanges. |
+| 📋 **Unified Command Center** | Smart categorization of tasks sorted by remaining duration and critical level. |
+| 🔔 **Edge Push Subsystem** | Custom Web Push subscription manager stored in **Cloudflare KV**, delivering alerts even when the browser is closed. |
+| 📱 **PWA & Offline Capability** | Standard service worker caching with custom iOS Safari & Android Chrome install prompts. |
+| 📐 **Dynamic Layouts** | Fluid grid views for Today, Week, Month calendar, and granular Course Breakdowns. |
+| ⚡ **Zero-Server Overhead** | Deployed entirely on Cloudflare's serverless edge infrastructure. |
 
 ---
 
-## 🖼️ Screenshots
+## 🏗️ Architecture & Data Flow
 
-> Login with your Moodle URL, username, and password — no new account needed.
+```mermaid
+sequenceDiagram
+    participant User as Client Browser (PWA)
+    participant Worker as Next.js API Proxy (Cloudflare Worker)
+    participant KV as Cloudflare KV Store
+    participant Moodle as Institution Moodle Server
 
-The dashboard displays:
-- **Course name** for each task
-- **Due date** formatted clearly
-- **Submission status** badge (Overdue / Due Soon / Upcoming / Submitted)
-- **Direct link** to the Moodle activity page
+    User->>Worker: POST /api/moodle/token (Credentials)
+    Worker->>Moodle: Handshake (Obtain Web Services Token)
+    Moodle-->>Worker: Return WS Token
+    Worker-->>User: Return Session JSON (Encrypted client-side)
+    
+    Note over User, KV: Push Notifications Registration
+    User->>Worker: POST /api/push/subscribe (Subscription Payload)
+    Worker->>KV: Save subscription details mapped to Moodle Token
+    KV-->>Worker: Success
+    Worker-->>User: Subscription Registered
+```
+
+### 1. The Push Subsystem
+- **Subscription Store:** The app requests permission via the browser Web Push API, sending the payload to `/api/push/subscribe`. Subscriptions are safely registered inside the Cloudflare KV database (`NOTI_LMS_KV`).
+- **Push Server Agent:** When the automated background checker trigger runs, it queries active sessions, contacts the respective Moodle API endpoint to fetch task deltas, and dispatches custom Web Push notifications via VAPID keys.
+
+### 2. The PWA Engine
+- Registered via `public/sw.js` to enable background push notification events (`push` and `notificationclick`).
+- Features a custom PWA installation module (`components/pwa-install-prompt.tsx`) that detects platforms (safeguarding iOS Safari "Add to Home Screen" instructions and prompt interceptors on Android Chrome).
 
 ---
 
-## 🏗️ Tech Stack
+## 📁 Project Directory Structure
 
-| Layer | Technology |
-|---|---|
-| **Framework** | [Next.js 16](https://nextjs.org/) (App Router) |
-| **Language** | TypeScript 6 |
-| **Styling** | Tailwind CSS v4 |
-| **Data Fetching** | TanStack Query (React Query) v5 |
-| **UI Components** | Lucide React, Class Variance Authority |
-| **Deployment** | Cloudflare Workers via [@opennextjs/cloudflare](https://opennext.js.org/cloudflare) |
-| **External API** | [Moodle Web Services REST API](https://docs.moodle.org/dev/Web_services) |
+```
+Noti-LMS/
+├── app/
+│   ├── api/
+│   │   ├── moodle/
+│   │   │   ├── token/route.ts       # Moodle authentication proxy
+│   │   │   └── rest/route.ts        # Moodle REST API proxy
+│   │   └── push/
+│   │       ├── subscribe/route.ts   # Subscriptions registration endpoint
+│   │       └── send/route.ts        # Dispatch/test push notifications
+│   ├── globals.css                  # Core CSS variables, Tailwind imports, and transitions
+│   ├── layout.tsx                   # Page viewport settings and theme hooks
+│   └── page.tsx                     # Main routing view
+├── components/
+│   ├── dashboard-app.tsx            # Shell component, Sidebar, Header, and views logic
+│   ├── pwa-install-prompt.tsx       # Smart OS PWA installation cards
+│   ├── query-provider.tsx          # React Query state hydration wrapper
+│   └── ui/                          # Standard minimalist buttons and badges
+├── lib/
+│   ├── types.ts                     # Strict TypeScript interfaces
+│   ├── moodle-url.ts                # Sanitizes input URLs (e.g. stripping web-services paths)
+│   ├── push-client.ts               # Subscriptions and worker registration client-side helpers
+│   ├── push-db.ts                   # Subscriber storage wrapper interacting with Cloudflare KV
+│   └── utils.ts                     # Design class merging utility (clsx + tailwind-merge)
+├── public/
+│   ├── manifest.json                # PWA capability credentials
+│   └── sw.js                        # Background Service Worker events listener
+├── wrangler.jsonc                   # Cloudflare binding and worker configuration file
+├── open-next.config.ts              # OpenNext bundling rules
+└── DESIGN-tesla.md                  # Comprehensive guidelines on Tesla design system compliance
+```
 
 ---
 
-## 🚀 Getting Started (Local Development)
+## 🚀 Installation & Local Development
 
 ### Prerequisites
-- [Node.js](https://nodejs.org/) >= 18.x
-- A running Moodle instance (self-hosted or institutional)
-- Moodle Web Services enabled with the **Moodle Mobile Web** service
+- [Node.js](https://nodejs.org/) >= 18.x (Recommended: v22.x)
+- Enabled Moodle Mobile Web service (`webservice/rest/server.php`) on your target Moodle instance.
 
-### Installation
+### Setup Steps
 
-```bash
-# 1. Clone the repository
-git clone https://github.com/noppakorn001/Noti-LMS-main.git
-cd Noti-LMS-main
+1. **Clone and Install:**
+   ```bash
+   git clone https://github.com/noppakorn001/Noti-LMS.git
+   cd Noti-LMS
+   npm install
+   ```
 
-# 2. Install dependencies
-npm install
+2. **Configure Environment Variables:**
+   Create a `.env.local` file in the root directory:
+   ```env
+   NEXT_PUBLIC_VAPID_PUBLIC_KEY=BKkCBTXev6dqy1iwUgCLyK0NX4sYKilrT-Ja_M-eF3g7-5FINxqn2nQ6ti8x18-aUg7H254k9h7eFdyTvzKfbnU
+   VAPID_PRIVATE_KEY=your_vapid_private_key_here
+   VAPID_SUBJECT=mailto:your-email@example.com
+   ```
 
-# 3. Start the development server
-npm run dev
-```
-
-> Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-### Or use the included scripts
-
-```bash
-# Linux / macOS
-./run.sh
-
-# Windows
-Double-click run.bat
-```
-
----
-
-## 🔑 How to Use
-
-1. Navigate to the live site or your local server.
-2. Enter your **Moodle Site URL** (e.g., `https://lms.youruniversity.edu`).
-3. Enter your **Moodle Username** and **Password** — the same credentials you use to log into Moodle.
-4. Click **Sign In** to load your personalized task dashboard.
-
-> ⚠️ **Note:** Your credentials are sent directly to your institution's Moodle server. They are **never** stored by this application.
+3. **Start Local Development:**
+   ```bash
+   # Standard dev command
+   npm run dev
+   
+   # Or run via local bash helper script
+   ./run.sh
+   ```
 
 ---
 
-## ☁️ Deployment (Cloudflare Workers)
+## ☁️ Deployment (Cloudflare Workers / Pages)
 
-This project uses the [OpenNext Cloudflare Adapter](https://opennext.js.org/cloudflare) to run on Cloudflare Workers.
+This project leverages `@opennextjs/cloudflare` to compile the Next.js App Router for Cloudflare Workers.
 
-### Build for Cloudflare
-
+### 1. Create a Cloudflare KV Namespace
+Run the following command to create a namespace for the push subscriptions:
 ```bash
+npx wrangler kv namespace create NOTI_LMS_KV
+```
+Update your `wrangler.jsonc` file with the returned namespace ID:
+```json
+"kv_namespaces": [
+  {
+    "binding": "NOTI_LMS_KV",
+    "id": "your_kv_namespace_id_here"
+  }
+]
+```
+
+### 2. Build and Deploy
+```bash
+# Build production assets
 npm run build:cf
-```
 
-### Deploy to Cloudflare Workers
-
-```bash
+# Deploy to Cloudflare Worker
 npm run deploy
 ```
 
-> On first run, Wrangler will open a browser window to authenticate your Cloudflare account.
-
-### Or use the included scripts
-
-```bash
-# Linux / macOS
-./deploy.sh
-
-# Windows
-Double-click deploy.bat
-```
-
-### Build Settings for Cloudflare Pages (GitHub CI/CD)
-
-| Setting | Value |
-|---|---|
-| **Build command** | `npm run build:cf` |
-| **Build output directory** | `.open-next` |
-| **Compatibility Flag** | `nodejs_compat` |
-
 ---
 
-## 📁 Project Structure
+## 🔒 Security & Data Privacy
 
-```
-Noti-LMS-main/
-├── app/
-│   ├── api/
-│   │   └── moodle/
-│   │       ├── token/route.ts    # Moodle authentication proxy
-│   │       └── rest/route.ts     # Moodle REST API proxy
-│   ├── globals.css               # Global styles
-│   ├── layout.tsx                # Root layout
-│   └── page.tsx                  # Main page entry point
-├── components/
-│   ├── dashboard-app.tsx         # Main dashboard component
-│   └── ui/                       # Reusable UI components
-├── lib/
-│   ├── types.ts                  # TypeScript interfaces
-│   ├── moodle-url.ts             # URL normalization utility
-│   └── utils.ts                  # Shared utilities
-├── services/
-│   ├── authService.ts            # Authentication service
-│   ├── assignmentService.ts      # Assignment data fetching
-│   ├── examService.ts            # Quiz/exam data fetching
-│   └── moodleClient.ts           # Moodle API client
-├── wrangler.jsonc                # Cloudflare Workers config
-├── open-next.config.ts           # OpenNext build config
-├── run.bat                       # Local dev helper (Windows)
-└── deploy.bat                    # Cloudflare deploy helper (Windows)
-```
-
----
-
-## 🔒 Security
-
-- All Moodle API calls are proxied through Next.js API routes — the client never calls Moodle directly.
-- Credentials are transmitted over HTTPS and used only to obtain a short-lived Moodle session token.
-- No user data, passwords, or tokens are persisted on the server or in any database.
-- Rate limiting and input validation are applied at the API proxy layer.
-
----
-
-## 📄 License
-
-This project is intended for educational and personal use.
+1. **Zero-Session Storage on Server:** Credentials (usernames, passwords, web tokens) are passed directly through the proxy to the target Moodle server. No user database is maintained on the server.
+2. **Web Push Subscriptions Encryption:** Subscription payloads are stored securely inside Cloudflare's Edge KV store. Subscription records are indexed using a non-reversible cryptographic hash.
+3. **CORS Security:** Direct connections from the client to the Moodle server are prohibited to protect against browser cross-origin leaks. All traffic travels securely over HTTPS.
 
 ---
 
 <div align="center">
 
-Built with ❤️ by **Noppakorn** | Powered by [Cloudflare Workers](https://workers.cloudflare.com/) & [Next.js](https://nextjs.org/)
-
-**🌐 [https://notilms.noppakornwunnoy01.workers.dev/](https://notilms.noppakornwunnoy01.workers.dev/)**
+Built with ❤️ by **Noppakorn** | Deployed on the Cloudflare Global Edge Network
 
 </div>
