@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "noti-lms",
+  "name": "notilms",
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-06-24",
   "compatibility_flags": [
@@ -13,7 +13,7 @@
   "kv_namespaces": [
     {
       "binding": "NOTI_LMS_KV",
-      "id": "NOTI_LMS_KV_PLACEHOLDER"
+      "id": "95e9c8acb98543749024143d1b801327"
     }
   ],
   "observability": {
