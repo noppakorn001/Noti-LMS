@@ -9,7 +9,7 @@
  * depends on Node.js crypto APIs.
  */
 
-import { subscriptions } from "../subscribe/route";
+import { getSubscriptions, removeSubscription } from "@/lib/push-db";
 
 const VAPID_PUBLIC_KEY =
   "BKkCBTXev6dqy1iwUgCLyK0NX4sYKilrT-Ja_M-eF3g7-5FINxqn2nQ6ti8x18-aUg7H254k9h7eFdyTvzKfbnU";
@@ -32,7 +32,9 @@ export async function POST(request: Request) {
       // Gracefully handle empty or non-JSON payloads from simple cron triggers
     }
 
-    if (subscriptions.size === 0) {
+    const list = await getSubscriptions();
+
+    if (list.length === 0) {
       return Response.json(
         { message: "No subscriptions registered" }
       );
@@ -54,7 +56,7 @@ export async function POST(request: Request) {
         {
           error:
             "web-push library not installed. Run: npm install web-push",
-          subscriptionCount: subscriptions.size,
+          subscriptionCount: list.length,
           note: "For Cloudflare Workers, implement Web Push protocol directly.",
         },
         { status: 501 }
@@ -68,10 +70,10 @@ export async function POST(request: Request) {
     );
 
     const results = await Promise.allSettled(
-      [...subscriptions.entries()].map(async ([endpoint, sub]) => {
+      list.map(async (sub) => {
         try {
           await webpush!.sendNotification(sub as never, payload);
-          return { endpoint: endpoint.slice(0, 60), status: "sent" };
+          return { endpoint: sub.endpoint.slice(0, 60), status: "sent" };
         } catch (error: unknown) {
           const statusCode =
             error && typeof error === "object" && "statusCode" in error
@@ -79,10 +81,10 @@ export async function POST(request: Request) {
               : 0;
           // Remove invalid subscriptions (410 Gone, 404 Not Found)
           if (statusCode === 410 || statusCode === 404) {
-            subscriptions.delete(endpoint);
+            await removeSubscription(sub.endpoint);
           }
           return {
-            endpoint: endpoint.slice(0, 60),
+            endpoint: sub.endpoint.slice(0, 60),
             status: "failed",
             code: statusCode,
           };
@@ -94,7 +96,7 @@ export async function POST(request: Request) {
       (r) => r.status === "fulfilled" && r.value.status === "sent"
     ).length;
 
-    return Response.json({ success: true, sent, total: subscriptions.size });
+    return Response.json({ success: true, sent, total: list.length });
   } catch (error) {
     console.error("[Push] Send failed:", error);
     return Response.json({ error: "Failed to send notifications" }, { status: 500 });

@@ -1,4 +1,4 @@
-﻿// LMS Module - Learning Management System Components and Logic
+// LMS Module - Learning Management System Components and Logic
 // This module contains all LMS-related functionality separated from the main portfolio
 
 import React, { useState, useEffect } from 'react';
@@ -1524,6 +1524,7 @@ const LMSApp = () => {
     // Apply theme changes
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.classList.toggle('dark', theme === 'dark');
         localStorage.setItem('theme', theme);
     }, [theme]);
 

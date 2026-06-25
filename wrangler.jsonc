@@ -10,6 +10,12 @@
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
+  "kv_namespaces": [
+    {
+      "binding": "NOTI_LMS_KV",
+      "id": "NOTI_LMS_KV_PLACEHOLDER"
+    }
+  ],
   "observability": {
     "enabled": true
   }
