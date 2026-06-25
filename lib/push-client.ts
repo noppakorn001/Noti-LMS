@@ -5,6 +5,8 @@
  * and provides helpers for sending notifications on mobile.
  */
 
+import type { MoodleSession } from "@/lib/types";
+
 const VAPID_PUBLIC_KEY =
   "BKkCBTXev6dqy1iwUgCLyK0NX4sYKilrT-Ja_M-eF3g7-5FINxqn2nQ6ti8x18-aUg7H254k9h7eFdyTvzKfbnU";
 
@@ -84,14 +86,15 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
  * Returns the PushSubscription or null if it fails.
  */
 export async function subscribeToPush(
-  registration: ServiceWorkerRegistration
+  registration: ServiceWorkerRegistration,
+  moodleSession?: MoodleSession | null
 ): Promise<PushSubscription | null> {
   try {
     // Check existing subscription first
     const existing = await registration.pushManager.getSubscription();
     if (existing) {
       console.log("[Noti LMS] Already subscribed to push");
-      await saveSubscription(existing);
+      await saveSubscription(existing, moodleSession);
       return existing;
     }
 
@@ -101,7 +104,7 @@ export async function subscribeToPush(
     });
 
     console.log("[Noti LMS] Push subscription created");
-    await saveSubscription(subscription);
+    await saveSubscription(subscription, moodleSession);
     return subscription;
   } catch (error) {
     console.error("[Noti LMS] Push subscription failed:", error);
@@ -112,12 +115,22 @@ export async function subscribeToPush(
 /**
  * Save the push subscription to the backend.
  */
-async function saveSubscription(subscription: PushSubscription): Promise<void> {
+async function saveSubscription(
+  subscription: PushSubscription,
+  moodleSession?: MoodleSession | null
+): Promise<void> {
   try {
+    const body = {
+      ...subscription.toJSON(),
+      moodleUrl: moodleSession?.moodleUrl,
+      moodleToken: moodleSession?.token,
+      moodleUserId: moodleSession?.user.id,
+    };
+
     await fetch("/api/push/subscribe", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(subscription.toJSON()),
+      body: JSON.stringify(body),
     });
     console.log("[Noti LMS] Subscription saved to server");
   } catch (error) {

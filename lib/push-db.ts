@@ -6,6 +6,10 @@ export interface PushSubscriptionJSON {
     p256dh: string;
     auth: string;
   };
+  // Moodle session for personalized notifications (token only, no password)
+  moodleUrl?: string;
+  moodleToken?: string;
+  moodleUserId?: number;
 }
 
 // Fallback in-memory map for local development
@@ -15,12 +19,10 @@ async function getKV(): Promise<any> {
   try {
     const context = (await getCloudflareContext()) as any;
     if (context && context.env && context.env.NOTI_LMS_KV) {
-      console.log("[Push DB] Using Cloudflare KV storage");
       return context.env.NOTI_LMS_KV;
     }
-    console.log("[Push DB] KV binding not found, using memory fallback");
   } catch (error) {
-    console.log("[Push DB] getCloudflareContext() not available, using memory fallback");
+    // Falls back to memory in local dev
   }
   return null;
 }

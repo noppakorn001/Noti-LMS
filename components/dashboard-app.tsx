@@ -365,9 +365,20 @@ export function DashboardApp() {
     // If granted, subscribe to push notifications for background alerts
     if (permission === "granted" && isPushSupported()) {
       const registration = await navigator.serviceWorker.ready;
-      await subscribeToPush(registration);
+      await subscribeToPush(registration, session);
     }
   };
+
+  // Automatically refresh/sync the push subscription and Moodle session token to Cloudflare KV
+  useEffect(() => {
+    if (session && notificationPermission === "granted" && isPushSupported()) {
+      navigator.serviceWorker.ready.then((registration) => {
+        subscribeToPush(registration, session);
+      }).catch((err) => {
+        console.warn("[Noti LMS] Failed to sync push subscription on load:", err);
+      });
+    }
+  }, [session, notificationPermission]);
 
   if (!hasHydrated) {
     return <LoadingShell />;
