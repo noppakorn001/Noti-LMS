@@ -17,11 +17,20 @@ const VAPID_PRIVATE_KEY = "VTlg1O7zJ_ZDMI7rimFgEftZTAT55uFuMaA7m0KwVyc";
 
 export async function POST(request: Request) {
   try {
-    const { title, body, url } = (await request.json()) as {
-      title?: string;
-      body?: string;
-      url?: string;
-    };
+    let title = "Noti LMS";
+    let body = "You have upcoming tasks";
+    let url = "/";
+
+    try {
+      const json = await request.json() as { title?: string; body?: string; url?: string };
+      if (json) {
+        if (json.title) title = json.title;
+        if (json.body) body = json.body;
+        if (json.url) url = json.url;
+      }
+    } catch {
+      // Gracefully handle empty or non-JSON payloads from simple cron triggers
+    }
 
     if (subscriptions.size === 0) {
       return Response.json(
@@ -30,11 +39,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const payload = JSON.stringify({
-      title: title || "Noti LMS",
-      body: body || "You have upcoming tasks",
-      url: url || "/",
-    });
+    const payload = JSON.stringify({ title, body, url });
 
     // Note: In a Node.js environment (local dev), you can use the web-push library.
     // On Cloudflare Workers, implement the Web Push protocol manually or
