@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "noti-lms",
+  "name": "notilms",
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-06-24",
   "compatibility_flags": [
