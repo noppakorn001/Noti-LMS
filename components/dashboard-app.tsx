@@ -389,8 +389,8 @@ export function DashboardApp() {
   }
 
   return (
-    <main className="min-h-screen bg-white text-[#171A20] dark:bg-[#171A20] dark:text-white">
-      <div className="flex min-h-screen flex-col md:flex-row">
+    <main className="min-h-screen w-full max-w-full overflow-x-hidden bg-white text-[#171A20] dark:bg-[#171A20] dark:text-white">
+      <div className="flex min-h-screen w-full max-w-full overflow-hidden flex-col md:flex-row">
         <Sidebar
           activeView={activeView}
           setActiveView={setActiveView}
@@ -400,7 +400,7 @@ export function DashboardApp() {
           onLogout={handleLogout}
         />
 
-        <section className="flex-1 overflow-hidden">
+        <section className="flex-1 w-full max-w-full overflow-hidden">
           <MobileNav
             activeView={activeView}
             setActiveView={setActiveView}
@@ -409,7 +409,7 @@ export function DashboardApp() {
             setTheme={setTheme}
           />
 
-          <div className="scrollbar-minimal h-[calc(100vh-72px)] overflow-y-auto px-4 py-5 md:h-screen md:px-8 md:py-8 lg:px-12">
+          <div className="scrollbar-minimal h-[calc(100vh-72px)] w-full max-w-full overflow-y-auto overflow-x-hidden px-4 py-5 md:h-screen md:px-8 md:py-8 lg:px-12">
             <Header
               activeView={activeView}
               session={session}
@@ -1175,16 +1175,16 @@ function TaskCard({ task }: { task: TaskItem }) {
       onClick={handleOpen}
       onKeyDown={handleKeyDown}
       className={cn(
-        "group relative flex gap-4 rounded-lg bg-[#F4F4F4] p-4 transition-all duration-200 ease-in-out hover:bg-[#EEEEEE] hover:-translate-y-0.5 hover:scale-[1.005] cursor-pointer dark:bg-white/5 dark:hover:bg-white/10 outline-none focus-visible:ring-2 focus-visible:ring-[#3E6AE1]",
+        "group relative flex w-full min-w-0 gap-4 overflow-hidden rounded-lg bg-[#F4F4F4] p-4 transition-all duration-200 ease-in-out hover:bg-[#EEEEEE] hover:-translate-y-0.5 hover:scale-[1.005] cursor-pointer dark:bg-white/5 dark:hover:bg-white/10 outline-none focus-visible:ring-2 focus-visible:ring-[#3E6AE1]",
         leftBorderClass
       )}
     >
       <div className="mt-1 grid h-10 w-10 shrink-0 place-items-center rounded bg-white dark:bg-[#171A20]">
         <Icon className="h-5 w-5 text-[#3E6AE1]" />
       </div>
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between pr-12 sm:pr-16">
-          <div className="min-w-0">
+      <div className="min-w-0 flex-1 overflow-hidden">
+        <div className="flex w-full min-w-0 flex-col gap-2 pr-12 sm:flex-row sm:items-start sm:justify-between sm:pr-16">
+          <div className="min-w-0 flex-1 overflow-hidden">
             <h3 className="truncate text-sm font-medium group-hover:text-[#3E6AE1] transition-colors">{task.title}</h3>
             <p className="mt-1 truncate text-sm text-[#5C5E62] dark:text-[#D0D1D2]">{task.courseName}</p>
           </div>
