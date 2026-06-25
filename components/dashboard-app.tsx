@@ -22,6 +22,7 @@ import {
   Bell,
   CalendarDays,
   CheckCircle2,
+  ChevronLeft,
   ChevronRight,
   Clock3,
   ExternalLink,
@@ -29,11 +30,13 @@ import {
   EyeOff,
   LayoutDashboard,
   LogOut,
+  Menu,
   Moon,
   Settings,
   ShieldCheck,
   Sun,
   Timer,
+  X,
 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FormEvent, useEffect, useMemo, useState } from "react";
@@ -238,10 +241,19 @@ export function DashboardApp() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>("default");
   const [hasHydrated, setHasHydrated] = useState(false);
+  const [sidebarMode, setSidebarMode] = useState<"expanded" | "collapsed" | "hidden">("expanded");
 
   useEffect(() => {
     setSession(readStoredSession());
     setNotificationPermission(typeof Notification === "undefined" ? "denied" : Notification.permission);
+    
+    if (typeof window !== "undefined") {
+      const stored = window.localStorage.getItem("noti-lms-sidebar-mode");
+      if (stored === "expanded" || stored === "collapsed" || stored === "hidden") {
+        setSidebarMode(stored);
+      }
+    }
+    
     setHasHydrated(true);
 
     // Register Service Worker for PWA & push notification support
@@ -357,6 +369,13 @@ export function DashboardApp() {
     queryClient.clear();
   };
 
+  const updateSidebarMode = (mode: "expanded" | "collapsed" | "hidden") => {
+    setSidebarMode(mode);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("noti-lms-sidebar-mode", mode);
+    }
+  };
+
   const enableNotifications = async () => {
     if (typeof Notification === "undefined") return;
     const permission = await Notification.requestPermission();
@@ -398,6 +417,8 @@ export function DashboardApp() {
           theme={theme}
           setTheme={setTheme}
           onLogout={handleLogout}
+          sidebarMode={sidebarMode}
+          onModeChange={updateSidebarMode}
         />
 
         <section className="flex-1 w-full max-w-full overflow-hidden">
@@ -415,6 +436,8 @@ export function DashboardApp() {
               session={session}
               notificationPermission={notificationPermission}
               enableNotifications={enableNotifications}
+              sidebarMode={sidebarMode}
+              onSidebarModeChange={updateSidebarMode}
             />
 
             {error ? (
@@ -595,6 +618,8 @@ function Sidebar({
   theme,
   setTheme,
   onLogout,
+  sidebarMode,
+  onModeChange,
 }: {
   activeView: DashboardView;
   setActiveView: (view: DashboardView) => void;
@@ -602,18 +627,55 @@ function Sidebar({
   theme: Theme;
   setTheme: (theme: Theme) => void;
   onLogout: () => void;
+  sidebarMode: "expanded" | "collapsed" | "hidden";
+  onModeChange: (mode: "expanded" | "collapsed" | "hidden") => void;
 }) {
+  const isCollapsed = sidebarMode === "collapsed";
+
   return (
-    <aside className="hidden w-[264px] shrink-0 flex-col justify-between bg-[#F4F4F4] px-4 py-5 dark:bg-[#111318] md:flex">
+    <aside
+      className={cn(
+        "hidden shrink-0 flex-col justify-between bg-[#F4F4F4] dark:bg-[#111318] md:flex transition-all duration-300 ease-in-out border-r border-[#EEEEEE] dark:border-white/5",
+        sidebarMode === "expanded" && "w-[264px] px-4 py-5 opacity-100",
+        sidebarMode === "collapsed" && "w-[72px] px-2 py-5 opacity-100",
+        sidebarMode === "hidden" && "w-0 p-0 opacity-0 overflow-hidden border-none"
+      )}
+    >
       <div>
-        <div className="mb-10 flex items-center justify-between px-2">
-          <div className="flex items-center gap-2">
-            <img src="/logo.png" alt="Noti LMS" className="h-6 w-auto" />
-            <div className="text-sm font-medium tracking-[0.35em]">NOTI LMS</div>
+        <div className={cn("mb-8 flex items-center justify-between px-2", isCollapsed && "flex-col gap-4 mb-6")}>
+          {!isCollapsed ? (
+            <div className="flex items-center gap-2">
+              <img src="/logo.png" alt="Noti LMS" className="h-6 w-auto" />
+              <div className="text-sm font-medium tracking-[0.35em]">NOTI LMS</div>
+            </div>
+          ) : (
+            <img src="/logo.png" alt="Noti LMS" className="h-6 w-auto mx-auto" />
+          )}
+          <div className={cn("flex items-center gap-0.5", isCollapsed && "flex-col gap-2")}>
+            {!isCollapsed && (
+              <Button variant="ghost" size="icon" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} title="Toggle Theme">
+                {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onModeChange(isCollapsed ? "expanded" : "collapsed")}
+              title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+            >
+              {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+            </Button>
+            {!isCollapsed && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => onModeChange("hidden")}
+                title="Hide Sidebar"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
           </div>
-          <Button variant="ghost" size="icon" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
-            {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-          </Button>
         </div>
 
         <nav className="space-y-1">
@@ -623,13 +685,15 @@ function Sidebar({
               <button
                 key={item.id}
                 onClick={() => setActiveView(item.id)}
+                title={item.label}
                 className={cn(
-                  "tesla-transition flex min-h-10 w-full items-center gap-3 rounded px-3 text-sm font-medium text-[#5C5E62] hover:bg-white hover:text-[#171A20] dark:text-[#D0D1D2] dark:hover:bg-white/10 dark:hover:text-white",
+                  "tesla-transition flex min-h-10 w-full items-center rounded text-sm font-medium text-[#5C5E62] hover:bg-white hover:text-[#171A20] dark:text-[#D0D1D2] dark:hover:bg-white/10 dark:hover:text-white",
+                  isCollapsed ? "justify-center px-0" : "gap-3 px-3",
                   activeView === item.id && "bg-white text-[#171A20] dark:bg-white/10 dark:text-white",
                 )}
               >
-                <Icon className="h-4 w-4" />
-                {item.label}
+                <Icon className="h-4 w-4 shrink-0" />
+                {!isCollapsed && <span className="truncate">{item.label}</span>}
               </button>
             );
           })}
@@ -637,10 +701,22 @@ function Sidebar({
       </div>
 
       <div className="space-y-4">
-        <UserBlock session={session} />
-        <Button variant="danger" className="w-full justify-start gap-2" onClick={onLogout}>
-          <LogOut className="h-4 w-4" />
-          Logout
+        {isCollapsed && (
+          <div className="flex justify-center">
+            <Button variant="ghost" size="icon" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} title="Toggle Theme">
+              {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </Button>
+          </div>
+        )}
+        <UserBlock session={session} isCollapsed={isCollapsed} />
+        <Button
+          variant="danger"
+          className={cn("w-full justify-start gap-2", isCollapsed && "justify-center px-0")}
+          onClick={onLogout}
+          title="Logout"
+        >
+          <LogOut className="h-4 w-4 shrink-0" />
+          {!isCollapsed && <span>Logout</span>}
         </Button>
       </div>
     </aside>
@@ -694,18 +770,28 @@ function MobileNav({
   );
 }
 
-function UserBlock({ session }: { session: MoodleSession }) {
+function UserBlock({ session, isCollapsed }: { session: MoodleSession; isCollapsed?: boolean }) {
+  const avatar = session.user.profileImage ? (
+    <img className="h-10 w-10 rounded object-cover shrink-0" src={session.user.profileImage} alt="" />
+  ) : (
+    <div className="grid h-10 w-10 shrink-0 place-items-center rounded bg-[#3E6AE1] text-sm font-medium text-white">
+      {session.user.fullName.charAt(0)}
+    </div>
+  );
+
+  if (isCollapsed) {
+    return (
+      <div className="flex justify-center" title={`${session.user.fullName} (${session.moodleUrl})`}>
+        {avatar}
+      </div>
+    );
+  }
+
   return (
-    <div className="rounded bg-white p-3 dark:bg-white/5">
-      <div className="flex items-center gap-3">
-        {session.user.profileImage ? (
-          <img className="h-10 w-10 rounded object-cover" src={session.user.profileImage} alt="" />
-        ) : (
-          <div className="grid h-10 w-10 place-items-center rounded bg-[#3E6AE1] text-sm font-medium text-white">
-            {session.user.fullName.charAt(0)}
-          </div>
-        )}
-        <div className="min-w-0">
+    <div className="rounded bg-white p-3 dark:bg-white/5 overflow-hidden min-w-0">
+      <div className="flex items-center gap-3 min-w-0">
+        {avatar}
+        <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium">{session.user.fullName}</p>
           <p className="truncate text-xs text-[#5C5E62] dark:text-[#D0D1D2]">{session.moodleUrl}</p>
         </div>
@@ -719,19 +805,36 @@ function Header({
   session,
   notificationPermission,
   enableNotifications,
+  sidebarMode,
+  onSidebarModeChange,
 }: {
   activeView: DashboardView;
   session: MoodleSession;
   notificationPermission: NotificationPermission;
   enableNotifications: () => void;
+  sidebarMode: "expanded" | "collapsed" | "hidden";
+  onSidebarModeChange: (mode: "expanded" | "collapsed" | "hidden") => void;
 }) {
   const title = navigation.find((item) => item.id === activeView)?.label ?? "Today";
 
   return (
     <header className="mb-8 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-      <div>
-        <p className="text-sm text-[#5C5E62] dark:text-[#D0D1D2]">{format(new Date(), "EEEE, MMMM d")}</p>
-        <h1 className="text-display mt-1 text-[40px] font-medium leading-[1.2]">{title}</h1>
+      <div className="flex items-start gap-3">
+        {sidebarMode !== "expanded" && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="hidden md:flex shrink-0 mt-1.5 rounded hover:bg-[#EEEEEE] dark:hover:bg-white/10"
+            onClick={() => onSidebarModeChange("expanded")}
+            title="Show Sidebar"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+        )}
+        <div>
+          <p className="text-sm text-[#5C5E62] dark:text-[#D0D1D2]">{format(new Date(), "EEEE, MMMM d")}</p>
+          <h1 className="text-display mt-1 text-[40px] font-medium leading-[1.2]">{title}</h1>
+        </div>
       </div>
       <div className="flex flex-wrap items-center gap-2">
         <Badge className="bg-[#F4F4F4] dark:bg-white/10">
