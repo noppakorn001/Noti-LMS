@@ -101,3 +101,7 @@ export async function POST(request: Request) {
     return Response.json({ error: "Failed to send notifications" }, { status: 500 });
   }
 }
+
+export async function GET(request: Request) {
+  return POST(request);
+}
