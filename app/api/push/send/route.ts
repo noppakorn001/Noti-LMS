@@ -10,6 +10,7 @@
 import { getSubscriptions, removeSubscription } from "@/lib/push-db";
 import { normalizeMoodleUrl } from "@/lib/moodle-url";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { buildPushPayload } from "@block65/webcrypto-web-push";
 
 // Decode HTML entities (duplicate from lib/utils to run inside Serverless Edge/Worker)
 function decodeHtmlEntities(str: string): string {
@@ -238,25 +239,11 @@ export async function POST(request: Request) {
       );
     }
 
-    // Import web-push (Node.js compatibility mode)
-    let webpush;
-    try {
-      webpush = await import("web-push");
-    } catch {
-      return Response.json(
-        {
-          error: "web-push library not installed. Run: npm install web-push",
-          subscriptionCount: list.length,
-        },
-        { status: 501 }
-      );
-    }
-
-    webpush.setVapidDetails(
-      "mailto:noti-lms@example.com",
-      VAPID_PUBLIC_KEY,
-      VAPID_PRIVATE_KEY
-    );
+    const vapidKeys = {
+      subject: "mailto:noti-lms@example.com",
+      publicKey: VAPID_PUBLIC_KEY,
+      privateKey: VAPID_PRIVATE_KEY,
+    };
 
     const results = await Promise.allSettled(
       list.map(async (sub) => {
@@ -289,28 +276,49 @@ export async function POST(request: Request) {
             }
           }
 
-          const payload = JSON.stringify({
+          const messageData = JSON.stringify({
             title: userTitle,
             body: userBody,
             url: userUrl,
           });
 
-          await webpush!.sendNotification(sub as never, payload);
-          return { endpoint: sub.endpoint.slice(0, 60), status: "sent" };
-        } catch (error: unknown) {
-          const statusCode =
-            error && typeof error === "object" && "statusCode" in error
-              ? (error as { statusCode: number }).statusCode
-              : 0;
+          // Build encrypted push payload using Native Web Crypto API via @block65/webcrypto-web-push
+          const pushPayload = await buildPushPayload(
+            {
+              data: messageData,
+              options: {
+                ttl: 60,
+              },
+            },
+            {
+              endpoint: sub.endpoint,
+              expirationTime: null,
+              keys: {
+                p256dh: sub.keys.p256dh,
+                auth: sub.keys.auth,
+              },
+            },
+            vapidKeys
+          );
 
-          // Automatically clean up expired subscriptions (410 Gone / 404 Not Found)
-          if (statusCode === 410 || statusCode === 404) {
-            await removeSubscription(sub.endpoint);
+          // Send to push service endpoint using standard fetch
+          const response = await fetch(sub.endpoint, pushPayload as any);
+
+          if (!response.ok) {
+            // Automatically clean up expired subscriptions (410 Gone / 404 Not Found)
+            if (response.status === 410 || response.status === 404) {
+              await removeSubscription(sub.endpoint);
+            }
+            throw new Error(`Push service returned status ${response.status}`);
           }
+
+          return { endpoint: sub.endpoint.slice(0, 60), status: "sent" };
+        } catch (error: any) {
+          console.error(`[Push] Failed to send to subscription ${sub.endpoint.slice(0, 60)}:`, error);
           return {
             endpoint: sub.endpoint.slice(0, 60),
             status: "failed",
-            code: statusCode,
+            message: error?.message || "Unknown error",
           };
         }
       })
