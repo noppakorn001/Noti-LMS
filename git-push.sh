@@ -18,12 +18,19 @@ echo ""
 echo "Staging changes (git add .)..."
 git add .
 
-echo ""
-read -p "Enter commit message (or press Enter for 'Update project files'): " commit_msg
+# Check if commit message was passed as argument
+commit_msg="$1"
+
 if [ -z "$commit_msg" ]; then
-    commit_msg="Update project files"
+    echo ""
+    read -p "Enter commit message (or press Enter for 'Update project files'): " commit_msg
+    if [ -z "$commit_msg" ]; then
+        commit_msg="Update project files"
+    fi
 fi
 
+echo ""
+echo "Committing with message: '$commit_msg'..."
 git commit -m "$commit_msg"
 
 echo ""

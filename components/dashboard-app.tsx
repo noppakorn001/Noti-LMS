@@ -262,19 +262,86 @@ export function DashboardApp() {
 
   const coursesQuery = useQuery({
     queryKey: ["courses", session?.moodleUrl, session?.user.id],
-    queryFn: () => courseService.getCourses(session as MoodleSession),
+    queryFn: async () => {
+      if (session?.token === "mock-token-12345") {
+        return [
+          { id: 1, name: "Legal", shortName: "LEGAL" },
+          { id: 2, name: "Science", shortName: "SCIENCE" },
+          { id: 3, name: "Bills", shortName: "BILLS" },
+        ];
+      }
+      return courseService.getCourses(session as MoodleSession);
+    },
     enabled: Boolean(session),
   });
 
   const assignmentsQuery = useQuery({
     queryKey: ["assignments", session?.moodleUrl, coursesQuery.data?.map((course) => course.id).join(",")],
-    queryFn: () => assignmentService.getAssignments(session as MoodleSession, coursesQuery.data ?? []),
+    queryFn: async () => {
+      if (session?.token === "mock-token-12345") {
+        const now = new Date();
+        return [
+          {
+            id: 101,
+            title: "Filing Deadline",
+            type: "assignment",
+            courseId: 1,
+            courseName: "Legal Studies",
+            dueDate: addDays(now, 30),
+            status: "pending",
+            priority: "low",
+            moodleUrl: "https://lms.psu.ac.th",
+          },
+          {
+            id: 102,
+            title: "Biology Lab Report",
+            type: "assignment",
+            courseId: 2,
+            courseName: "Science Biology",
+            dueDate: addDays(now, 7),
+            status: "pending",
+            priority: "normal",
+            moodleUrl: "https://lms.psu.ac.th",
+          },
+          {
+            id: 104,
+            title: "Rent",
+            type: "assignment",
+            courseId: 3,
+            courseName: "Bills and Payments",
+            dueDate: addDays(now, 4),
+            status: "pending",
+            priority: "normal",
+            moodleUrl: "https://lms.psu.ac.th",
+          },
+        ] as TaskItem[];
+      }
+      return assignmentService.getAssignments(session as MoodleSession, coursesQuery.data ?? []);
+    },
     enabled: Boolean(session && coursesQuery.data?.length),
   });
 
   const examsQuery = useQuery({
     queryKey: ["exams", session?.moodleUrl, coursesQuery.data?.map((course) => course.id).join(",")],
-    queryFn: () => examService.getExams(session as MoodleSession, coursesQuery.data ?? []),
+    queryFn: async () => {
+      if (session?.token === "mock-token-12345") {
+        const now = new Date();
+        return [
+          {
+            id: 103,
+            title: "Bring printed notes",
+            type: "exam",
+            courseId: 2,
+            courseName: "Biology Midterm",
+            dueDate: new Date(now.getTime() - (3 * 60 + 24) * 60 * 1000),
+            status: "overdue",
+            priority: "high",
+            moodleUrl: "https://lms.psu.ac.th",
+          },
+        ] as TaskItem[];
+      }
+      return examService.getExams(session as MoodleSession, coursesQuery.data ?? []);
+    },
     enabled: Boolean(session && coursesQuery.data?.length),
   });
 
@@ -430,7 +497,7 @@ export function DashboardApp() {
             setTheme={setTheme}
           />
 
-          <div className="scrollbar-minimal h-[calc(100vh-72px)] w-full max-w-full overflow-y-auto overflow-x-hidden px-4 py-5 md:h-screen md:px-8 md:py-8 lg:px-12">
+          <div className="scrollbar-minimal h-[calc(100vh-72px)] w-full max-w-full overflow-y-auto overflow-x-hidden px-4 py-5 md:h-screen md:px-8 md:py-8 lg:px-12 bg-[#F9FAFB] dark:bg-[#121417]">
             <Header
               activeView={activeView}
               session={session}
@@ -1252,12 +1319,49 @@ function TaskSection({
   );
 }
 
-function TaskCard({ task }: { task: TaskItem }) {
-  const Icon = task.type === "exam" ? Timer : CheckCircle2;
-  const statusBadge = getStatusBadgeProps(task);
-  const priorityBadge = getPriorityProps(task.dueDate);
-  const leftBorderClass = getLeftBorderClass(task);
+function getFormattedDueDate(task: TaskItem) {
+  const date = getDeadlineDate(task);
+  if (isToday(date)) {
+    return `Due Today at ${format(date, "h:mm a")}`;
+  }
+  if (isTomorrow(date)) {
+    return `Due Tomorrow at ${format(date, "h:mm a")}`;
+  }
+  return `Due ${format(date, "MMM d")}`;
+}
 
+function getCourseStyle(courseName: string, type: string) {
+  if (type === "exam") {
+    return { color: "#9CA3AF", tag: "EXAM" };
+  }
+  
+  let hash = 0;
+  for (let i = 0; i < courseName.length; i++) {
+    hash = courseName.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  
+  const colors = [
+    { color: "#A259FF" }, // Purple
+    { color: "#3E6AE1" }, // Blue (Tesla Electric Blue)
+    { color: "#22C55E" }, // Green
+    { color: "#F59E0B" }, // Amber/Yellow
+    { color: "#EC4899" }, // Pink
+    { color: "#14B8A6" }, // Teal
+  ];
+  
+  const index = Math.abs(hash) % colors.length;
+  
+  const words = courseName.trim().split(/\s+/);
+  const firstWord = words[0] ? words[0].replace(/[^a-zA-Z0-9]/g, "").toUpperCase() : "COURSE";
+  const tag = firstWord.substring(0, 12);
+  
+  return { color: colors[index].color, tag };
+}
+
+function TaskCard({ task }: { task: TaskItem }) {
+  const { color: courseColor, tag: courseTag } = getCourseStyle(task.courseName, task.type);
+  const visualStatus = getVisualStatus(task);
+  
   const handleOpen = () => {
     if (task.moodleUrl) {
       window.open(task.moodleUrl, "_blank");
@@ -1271,52 +1375,105 @@ function TaskCard({ task }: { task: TaskItem }) {
     }
   };
 
+  const formattedDueDate = getFormattedDueDate(task);
+  
+  let statusText1 = "";
+  let statusText2 = "";
+  let statusColorClass = "";
+
+  const now = new Date();
+  const date = getDeadlineDate(task);
+
+  if (visualStatus === "submitted") {
+    statusText1 = "Submitted";
+    statusText2 = "on time";
+    statusColorClass = "text-green-600 dark:text-green-400";
+  } else if (visualStatus === "overdue") {
+    const diffMs = now.getTime() - date.getTime();
+    const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    
+    statusText1 = "Overdue";
+    if (diffDays > 0) {
+      statusText2 = `${diffDays}d ${diffHrs % 24}h late`;
+    } else {
+      statusText2 = `${diffHrs}h ${diffMins}m late`;
+    }
+    statusColorClass = "text-red-600 dark:text-red-400";
+  } else if (visualStatus === "due-soon") {
+    const diffMs = date.getTime() - now.getTime();
+    const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    
+    statusText1 = "Due Soon";
+    statusText2 = `${diffHrs}h ${diffMins}m left`;
+    statusColorClass = "text-amber-600 dark:text-amber-400";
+  } else {
+    const diffMs = date.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    
+    statusText1 = `${diffDays} days`;
+    statusText2 = "remaining";
+    statusColorClass = "text-[#B45309] dark:text-[#F59E0B]";
+  }
+
   return (
     <article
       role="button"
       tabIndex={0}
       onClick={handleOpen}
       onKeyDown={handleKeyDown}
-      className={cn(
-        "group relative flex w-full min-w-0 gap-4 overflow-hidden rounded-lg bg-[#F4F4F4] p-4 transition-all duration-200 ease-in-out hover:bg-[#EEEEEE] hover:-translate-y-0.5 hover:scale-[1.005] cursor-pointer dark:bg-white/5 dark:hover:bg-white/10 outline-none focus-visible:ring-2 focus-visible:ring-[#3E6AE1]",
-        leftBorderClass
-      )}
+      className="group relative flex w-full min-w-0 items-stretch gap-4 overflow-hidden rounded-2xl bg-white p-4 transition-all duration-300 ease-in-out hover:bg-gray-50 dark:bg-[#1E2026] dark:hover:bg-zinc-800/80 outline-none focus-visible:ring-2 focus-visible:ring-[#3E6AE1] border border-gray-100 dark:border-white/5 cursor-pointer"
     >
-      <div className="mt-1 grid h-10 w-10 shrink-0 place-items-center rounded bg-white dark:bg-[#171A20]">
-        <Icon className="h-5 w-5 text-[#3E6AE1]" />
-      </div>
-      <div className="min-w-0 flex-1 overflow-hidden">
-        <div className="flex w-full min-w-0 flex-col gap-2 pr-12 sm:flex-row sm:items-start sm:justify-between sm:pr-16">
-          <div className="min-w-0 flex-1 overflow-hidden">
-            <h3 className="truncate text-sm font-medium group-hover:text-[#3E6AE1] transition-colors">{task.title}</h3>
-            <p className="mt-1 truncate text-sm text-[#5C5E62] dark:text-[#D0D1D2]">{task.courseName}</p>
-          </div>
-          <div className="shrink-0 text-left sm:text-right">
-            <p className="text-sm font-medium">{format(getTaskDate(task), "MMM d, h:mm a")}</p>
-            <p className="mt-1 text-sm text-[#5C5E62] dark:text-[#D0D1D2]">{getDueLabel(task)}</p>
-          </div>
+      <div
+        className="w-1.5 rounded-full my-0.5 shrink-0"
+        style={{ backgroundColor: courseColor }}
+      />
+      
+      <div className="flex flex-1 min-w-0 flex-col justify-between">
+        <div>
+          {task.type === "assignment" && (
+            <div className="flex items-center gap-1 text-[10px] font-bold tracking-wider text-[#8E8E8E] uppercase mb-1">
+              <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: courseColor }} />
+              <span>{courseTag}</span>
+            </div>
+          )}
+          
+          <h3 className="truncate text-base font-semibold text-[#171A20] dark:text-white leading-snug group-hover:text-[#3E6AE1] transition-colors duration-300">
+            {task.title}
+          </h3>
+          <p className="mt-0.5 truncate text-sm text-[#5C5E62] dark:text-[#D0D1D2]">
+            {task.courseName}
+          </p>
         </div>
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <Badge className="bg-white capitalize dark:bg-[#171A20] text-[#171A20] dark:text-white border border-[#EEEEEE] dark:border-white/10">{task.type}</Badge>
-          <Badge className={cn("border-none", statusBadge.className)}>{statusBadge.label}</Badge>
-          <Badge className={cn("border-none", priorityBadge.className)}>{priorityBadge.label}</Badge>
-          {task.timeLimit ? <Badge className="bg-white dark:bg-[#171A20] text-[#171A20] dark:text-white border border-[#EEEEEE] dark:border-white/10">{Math.round(task.timeLimit / 60)} min</Badge> : null}
-        </div>
+        
+        <p className="mt-2 text-xs text-[#8E8E8E] dark:text-[#8E8E8E] font-medium">
+          {formattedDueDate}
+        </p>
       </div>
-      {/* Quick Open Icon & Chevron Arrow Animation */}
-      <div className="absolute right-4 top-4 flex items-center gap-1.5">
+
+      <div className="flex items-center gap-4 shrink-0 self-center">
+        <div className="text-right min-w-[70px]">
+          <p className={cn("text-base font-semibold leading-tight", statusColorClass)}>
+            {statusText1}
+          </p>
+          <p className="text-xs text-[#8E8E8E] dark:text-[#8E8E8E] mt-0.5">
+            {statusText2}
+          </p>
+        </div>
+
         <button
           onClick={(e) => {
             e.stopPropagation();
             handleOpen();
           }}
-          className="rounded p-1 text-[#5C5E62] hover:bg-zinc-200 hover:text-black dark:text-[#D0D1D2] dark:hover:bg-white/10 dark:hover:text-white transition-colors"
+          className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 dark:border-white/10 text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-white/10 dark:hover:text-white transition-colors duration-300"
           title="Open in Moodle"
-          aria-label="Open assignment in Moodle"
+          aria-label="Open in Moodle"
         >
-          <ExternalLink className="h-4 w-4" />
+          <span className="text-[12px] font-bold leading-none -mt-1">...</span>
         </button>
-        <ChevronRight className="h-5 w-5 text-[#D0D1D2] transition-transform duration-200 group-hover:translate-x-1" />
       </div>
     </article>
   );

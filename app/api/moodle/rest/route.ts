@@ -14,6 +14,14 @@ function appendParam(params: URLSearchParams, key: string, value: ParamValue) {
   params.append(key, String(value));
 }
 
+const ALLOWED_WS_FUNCTIONS = new Set([
+  "core_webservice_get_site_info",
+  "core_enrol_get_users_courses",
+  "mod_assign_get_assignments",
+  "mod_assign_get_submission_status",
+  "mod_quiz_get_quizzes_by_courses",
+]);
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -24,6 +32,10 @@ export async function POST(request: Request) {
 
     if (!moodleUrl || !token || !wsfunction) {
       return NextResponse.json({ error: "Moodle URL, token, and function are required." }, { status: 400 });
+    }
+
+    if (!ALLOWED_WS_FUNCTIONS.has(wsfunction)) {
+      return NextResponse.json({ error: `Function "${wsfunction}" is not permitted.` }, { status: 403 });
     }
 
     const params = new URLSearchParams({

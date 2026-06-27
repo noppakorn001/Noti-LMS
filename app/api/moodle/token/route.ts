@@ -1,8 +1,44 @@
 import { NextResponse } from "next/server";
 import { normalizeMoodleUrl } from "@/lib/moodle-url";
 
+const attempts = new Map<string, { count: number; resetAt: number }>();
+
+function checkRateLimit(
+  key: string,
+  maxAttempts = 5,
+  windowMs = 15 * 60 * 1000
+) {
+  const now = Date.now();
+  const entry = attempts.get(key);
+
+  if (!entry || now > entry.resetAt) {
+    attempts.set(key, { count: 1, resetAt: now + windowMs });
+    return { allowed: true, retryAfterMs: 0 };
+  }
+
+  if (entry.count >= maxAttempts) {
+    return { allowed: false, retryAfterMs: entry.resetAt - now };
+  }
+
+  entry.count++;
+  return { allowed: true, retryAfterMs: 0 };
+}
+
 export async function POST(request: Request) {
   try {
+    const ip = request.headers.get("cf-connecting-ip") ?? request.headers.get("x-forwarded-for") ?? "unknown";
+    const { allowed, retryAfterMs } = checkRateLimit(ip);
+
+    if (!allowed) {
+      return NextResponse.json(
+        { error: "Too many login attempts. Try again in 15 minutes." },
+        {
+          status: 429,
+          headers: { "Retry-After": String(Math.ceil(retryAfterMs / 1000)) },
+        }
+      );
+    }
+
     const body = await request.json();
     const moodleUrl = normalizeMoodleUrl(body.moodleUrl);
     const username = String(body.username ?? "");
