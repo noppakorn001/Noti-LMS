@@ -26,6 +26,20 @@ if [ $? -ne 0 ]; then
 fi
 
 echo ""
+echo "Uploading VAPID secrets to Cloudflare..."
+if [ -f .env.local ]; then
+    VAPID_KEY=$(grep -E "^VAPID_PRIVATE_KEY=" .env.local | cut -d'=' -f2- | tr -d '\r' | tr -d '"' | tr -d "'")
+    if [ ! -z "$VAPID_KEY" ]; then
+        echo "Found VAPID_PRIVATE_KEY in .env.local. Binding secret..."
+        echo "$VAPID_KEY" | npx wrangler secret put VAPID_PRIVATE_KEY
+    else
+        echo "Warning: VAPID_PRIVATE_KEY not found in .env.local. Please check your config."
+    fi
+else
+    echo "Warning: .env.local file not found. Could not configure VAPID secrets."
+fi
+
+echo ""
 echo "==================================================="
 echo "Deployment Successful!"
 echo "==================================================="
