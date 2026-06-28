@@ -1578,6 +1578,18 @@ function PixelLoader({ message = "Syncing with Moodle..." }: { message?: string 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#F9FAFB]/80 dark:bg-[#121417]/80 backdrop-blur-sm transition-opacity duration-300">
       <style>{`
+        @keyframes pixel-cow-bob {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(2px); }
+        }
+        @keyframes pixel-cow-tail {
+          0%, 100% { transform: rotate(0deg); }
+          50% { transform: rotate(-15deg); }
+        }
+        @keyframes pixel-cow-chew {
+          0%, 100% { transform: translateY(0) translateX(0); }
+          50% { transform: translateY(1px) translateX(-0.5px); }
+        }
         @keyframes pixel-hourglass-flip {
           0%, 90% { transform: rotate(0deg); }
           100% { transform: rotate(180deg); }
@@ -1600,6 +1612,16 @@ function PixelLoader({ message = "Syncing with Moodle..." }: { message?: string 
           0% { width: 0%; }
           100% { width: 100%; }
         }
+        .pixel-cow {
+          animation: pixel-cow-bob 1.2s steps(2) infinite;
+        }
+        .pixel-cow-tail {
+          animation: pixel-cow-tail 0.8s steps(2) infinite;
+          transform-origin: 6px 5px;
+        }
+        .pixel-cow-chew {
+          animation: pixel-cow-chew 0.4s steps(2) infinite;
+        }
         .pixel-hourglass {
           animation: pixel-hourglass-flip 3s steps(1) infinite;
           transform-origin: 8px 8px;
@@ -1620,6 +1642,67 @@ function PixelLoader({ message = "Syncing with Moodle..." }: { message?: string 
         }
       `}</style>
       <div className="flex flex-col items-center justify-center p-8 bg-white dark:bg-[#1E2026] border border-[#E5E7EB] dark:border-[#2D3139] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-none max-w-[280px] w-full mx-4 text-center">
+        {/* Animated Pixel Cow */}
+        <div className="w-20 h-16 mb-2 flex items-center justify-center pixel-cow">
+          <svg
+            viewBox="0 0 24 18"
+            className="w-full h-full text-[#111827] dark:text-gray-300"
+            style={{ imageRendering: "pixelated" }}
+          >
+            {/* Tail */}
+            <g className="pixel-cow-tail">
+              <path d="M4,5 h2 v1 h-2 z" fill="currentColor" />
+              <path d="M4,6 h1 v3 h-1 z" fill="currentColor" />
+            </g>
+
+            {/* Back Legs */}
+            <path d="M8,12 h1 v5 h-1 z" fill="#D1D5DB" className="dark:fill-gray-600" />
+            <path d="M8,17 h1 v1 h-1 z" fill="currentColor" />
+            <path d="M12,12 h1 v5 h-1 z" fill="#D1D5DB" className="dark:fill-gray-600" />
+            <path d="M12,17 h1 v1 h-1 z" fill="currentColor" />
+
+            {/* Body */}
+            <path d="M6,5 h10 v7 h-10 z" fill="#FFFFFF" className="dark:fill-gray-100" />
+            {/* Spots */}
+            <path d="M7,6 h3 v3 h-3 z M12,5 h3 v4 h-3 z M9,9 h3 v2 h-3 z" fill="currentColor" />
+
+            {/* Front Legs */}
+            <path d="M6,12 h1 v5 h-1 z" fill="#FFFFFF" className="dark:fill-gray-100" />
+            <path d="M6,17 h1 v1 h-1 z" fill="currentColor" />
+            <path d="M14,12 h1 v5 h-1 z" fill="#FFFFFF" className="dark:fill-gray-100" />
+            <path d="M14,17 h1 v1 h-1 z" fill="currentColor" />
+
+            {/* Neck */}
+            <path d="M15,4 h3 v5 h-3 z" fill="#FFFFFF" className="dark:fill-gray-100" />
+            <path d="M15,4 h2 v2 h-2 z" fill="currentColor" />
+
+            {/* Head */}
+            <path d="M17,2 h5 v5 h-5 z" fill="#FFFFFF" className="dark:fill-gray-100" />
+            {/* Head Spot */}
+            <path d="M17,2 h2 v2 h-2 z" fill="currentColor" />
+
+            {/* Horns */}
+            <path d="M18,0 h1 v2 h-1 z M21,0 h1 v2 h-1 z" fill="#9CA3AF" />
+
+            {/* Ears */}
+            <path d="M16,2 h1 v2 h-1 z M22,2 h1 v2 h-1 z" fill="currentColor" />
+
+            {/* Eye */}
+            <path d="M19,3 h1 v1 h-1 z" fill="currentColor" />
+
+            {/* Snout */}
+            <path d="M18,5 h5 v2 h-5 z" fill="#FDA4AF" />
+            {/* Nostrils */}
+            <path d="M19,6 h1 v1 h-1 z M22,6 h1 v1 h-1 z" fill="#E11D48" />
+
+            {/* Grass */}
+            <g className="pixel-cow-chew">
+              <path d="M22,7 h2 v1 h-2 z" fill="#10B981" />
+              <path d="M23,8 h1 v2 h-1 z" fill="#059669" />
+            </g>
+          </svg>
+        </div>
+
         {/* Pixel Art Hourglass */}
         <div className="w-16 h-16 mb-5 flex items-center justify-center">
           <svg
