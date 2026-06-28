@@ -536,6 +536,9 @@ export function DashboardApp() {
 
       {/* PWA install prompt for iOS & Android */}
       <PWAInstallPrompt />
+
+      {/* Pixel Art Loading Overlay */}
+      {isLoading && <PixelLoader message="Syncing with Moodle..." />}
     </main>
   );
 }
@@ -1568,5 +1571,107 @@ function ErrorState({ error }: { error: Error }) {
         Check that Moodle Web Services are enabled for your account and that the mobile service is available.
       </p>
     </Card>
+  );
+}
+
+function PixelLoader({ message = "Syncing with Moodle..." }: { message?: string }) {
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#F9FAFB]/80 dark:bg-[#121417]/80 backdrop-blur-sm transition-opacity duration-300">
+      <style>{`
+        @keyframes pixel-hourglass-flip {
+          0%, 90% { transform: rotate(0deg); }
+          100% { transform: rotate(180deg); }
+        }
+        @keyframes pixel-sand-top {
+          0% { transform: scaleY(1); }
+          90% { transform: scaleY(0); }
+          100% { transform: scaleY(0); }
+        }
+        @keyframes pixel-sand-bottom {
+          0% { transform: scaleY(0); }
+          90% { transform: scaleY(1); }
+          100% { transform: scaleY(1); }
+        }
+        @keyframes pixel-sand-stream {
+          0%, 90% { opacity: 1; }
+          91%, 100% { opacity: 0; }
+        }
+        @keyframes pixel-progress-bar {
+          0% { width: 0%; }
+          100% { width: 100%; }
+        }
+        .pixel-hourglass {
+          animation: pixel-hourglass-flip 3s steps(1) infinite;
+          transform-origin: 8px 8px;
+        }
+        .pixel-sand-top {
+          animation: pixel-sand-top 3s steps(8) infinite;
+          transform-origin: 8px 5px;
+        }
+        .pixel-sand-bottom {
+          animation: pixel-sand-bottom 3s steps(8) infinite;
+          transform-origin: 8px 12px;
+        }
+        .pixel-sand-stream {
+          animation: pixel-sand-stream 3s steps(1) infinite;
+        }
+        .pixel-progress-bar-fill {
+          animation: pixel-progress-bar 2.5s steps(10) infinite;
+        }
+      `}</style>
+      <div className="flex flex-col items-center justify-center p-8 bg-white dark:bg-[#1E2026] border border-[#E5E7EB] dark:border-[#2D3139] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-none max-w-[280px] w-full mx-4 text-center">
+        {/* Pixel Art Hourglass */}
+        <div className="w-16 h-16 mb-5 flex items-center justify-center">
+          <svg
+            viewBox="0 0 16 16"
+            className="w-12 h-12 text-[#111827] dark:text-[#F3F4F6]"
+            style={{ imageRendering: "pixelated" }}
+          >
+            <g className="pixel-hourglass">
+              {/* Outer wooden frame */}
+              <path d="M2,0 h12 v1 h-12 z" fill="currentColor" />
+              <path d="M2,15 h12 v1 h-12 z" fill="currentColor" />
+              <path d="M2,1 h1 v14 h-1 z" fill="currentColor" />
+              <path d="M13,1 h1 v14 h-1 z" fill="currentColor" />
+
+              {/* Glass outline */}
+              <path d="M3,1 h10 v1 h-10 z" fill="none" stroke="currentColor" strokeWidth="0.5" />
+              <path d="M4,2 h8 v1 h-8 z" fill="none" stroke="currentColor" strokeWidth="0.5" />
+              <path d="M5,3 h6 v1 h-6 z" fill="none" stroke="currentColor" strokeWidth="0.5" />
+              <path d="M6,4 h4 v3 h-4 z" fill="none" stroke="currentColor" strokeWidth="0.5" />
+              <path d="M6,9 h4 v3 h-4 z" fill="none" stroke="currentColor" strokeWidth="0.5" />
+              <path d="M5,12 h6 v1 h-6 z" fill="none" stroke="currentColor" strokeWidth="0.5" />
+              <path d="M4,13 h8 v1 h-8 z" fill="none" stroke="currentColor" strokeWidth="0.5" />
+              <path d="M3,14 h10 v1 h-10 z" fill="none" stroke="currentColor" strokeWidth="0.5" />
+
+              {/* Top Sand */}
+              <g className="pixel-sand-top">
+                <path d="M4,2 h8 v1 h-8 z M5,3 h6 v1 h-6 z M6,4 h4 v1 h-4 z" fill="#F59E0B" />
+              </g>
+
+              {/* Stream */}
+              <g className="pixel-sand-stream">
+                <path d="M7,5 h2 v6 h-2 z" fill="#F59E0B" />
+              </g>
+
+              {/* Bottom Sand */}
+              <g className="pixel-sand-bottom">
+                <path d="M6,11 h4 v1 h-4 z M5,12 h6 v1 h-6 z M4,13 h8 v1 h-8 z" fill="#F59E0B" />
+              </g>
+            </g>
+          </svg>
+        </div>
+
+        {/* Status Text */}
+        <div className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#111827] dark:text-[#F3F4F6] mb-4">
+          {message}
+        </div>
+
+        {/* Stepped Progress Bar */}
+        <div className="w-full h-3 bg-gray-100 dark:bg-gray-800 border-2 border-[#111827] dark:border-gray-600 p-0.5 relative overflow-hidden flex">
+          <div className="h-full bg-[#E82127] pixel-progress-bar-fill" />
+        </div>
+      </div>
+    </div>
   );
 }
