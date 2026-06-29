@@ -1435,7 +1435,7 @@ function TaskCard({ task }: { task: TaskItem }) {
       />
       
       <div className="flex flex-1 min-w-0 flex-col justify-between">
-        <div>
+        <div className="min-w-0">
           {task.type === "assignment" && (
             <div className="flex items-center gap-1 text-[10px] font-bold tracking-wider text-[#8E8E8E] uppercase mb-1">
               <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: courseColor }} />
