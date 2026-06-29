@@ -1451,13 +1451,18 @@ function TaskCard({ task }: { task: TaskItem }) {
           </p>
         </div>
         
-        <p className="mt-2 text-xs text-[#8E8E8E] dark:text-[#8E8E8E] font-medium">
-          {formattedDueDate}
-        </p>
+        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs font-medium">
+          <p className="text-[#8E8E8E] dark:text-[#8E8E8E]">
+            {formattedDueDate}
+          </p>
+          <span className={cn("sm:hidden inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-gray-50 dark:bg-zinc-800/50", statusColorClass)}>
+            {statusText1} {statusText2}
+          </span>
+        </div>
       </div>
 
       <div className="flex items-center gap-4 shrink-0 self-center">
-        <div className="text-right min-w-[70px]">
+        <div className="text-right min-w-[70px] hidden sm:block">
           <p className={cn("text-base font-semibold leading-tight", statusColorClass)}>
             {statusText1}
           </p>
